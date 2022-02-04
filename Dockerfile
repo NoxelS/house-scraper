@@ -16,7 +16,6 @@ RUN apt-get install -y \
     libicu-dev \
     libjpeg-dev \
     libnspr4 \
-    libnss3 \
     libpango-1.0-0 \
     libpangocairo-1.0-0 \
     libpng-dev \
