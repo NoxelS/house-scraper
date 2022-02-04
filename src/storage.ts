@@ -46,11 +46,11 @@ function query(query: string, inputs: any[], callback: (error: MysqlError, resul
  * @description Will only store an article if the uniqueKey is unique in the database.
  */
 export function storeArticle(article: Article, pool: Pool) {
-    query('SELECT * FROM articles WHERE uID = ?', [article.uniqueKey], (err, result) => {
+    query('SELECT * FROM houses WHERE uID = ?', [article.uniqueKey], (err, result) => {
         if(err || !result.length) {
             // Article does not exist
             console.log(`Found new article: "${article.title.length > 50 ? article.title.substr(0, 50) + '...' : article.title}"`);
-            query('INSERT INTO `mainpost`.`articles` (`uID`, `title`, `date`, `description`, `tel`, `chiffre`) VALUES (?, ?, ?, ?, ?, ?);',
+            query('INSERT INTO houses (`uID`, `title`, `date`, `description`, `tel`, `chiffre`) VALUES (?, ?, ?, ?, ?, ?);',
             [article.uniqueKey, article.title, article.date, article.description, article.tel, article.chiffre], err => {
                 if(err) { throw err } else { 
                     if(article.isAboutCarport) {

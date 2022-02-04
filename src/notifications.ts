@@ -16,7 +16,7 @@ export async function sendEmail(article: Article) {
     });
     
     const info = await transporter.sendMail({
-        from: `"Main Post Scraper 🏘" <${process.env.MAIL_USER}>`,
+        from: `"Noel's Haussuche 🏘" <${process.env.MAIL_USER}>`,
         to: process.env.MAIL_TARGET,
         subject: process.env.MAIL_SUBJECT,
         html: `

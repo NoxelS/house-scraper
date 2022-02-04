@@ -12,6 +12,7 @@ if (!process.env.produtction) config();
 
 // https://www.nestoria.de/haus/mieten/stadecken-elsheim?price_max=1500
 // https://www.immonet.de/immobiliensuche/sel.do?pageoffset=1&listsize=26&objecttype=1&locationname=Stadecken-Elsheim&acid=&actype=&city=142884&ajaxIsRadiusActive=true&sortby=16&suchart=2&radius=25&pcatmtypes=2_2&pCatMTypeStoragefield=2_2&parentcat=2&marketingtype=2&fromprice=&toprice=1300&fromarea=&toarea=&fromplotarea=&toplotarea=&fromrooms=&torooms=&objectcat=-1&wbs=-1&fromyear=&toyear=&fulltext=&absenden=Ergebnisse+anzeigen
+// Nachrichtenblatt 
 
 export const mainPost = 'https://www.mainpost.de/anzeigen/suchen/immobilien/';
 export const itemSpacer = '\n\n';
