@@ -14,7 +14,7 @@ if (!process.env.produtction) config();
 // https://www.immonet.de/immobiliensuche/sel.do?pageoffset=1&listsize=26&objecttype=1&locationname=Stadecken-Elsheim&acid=&actype=&city=142884&ajaxIsRadiusActive=true&sortby=16&suchart=2&radius=25&pcatmtypes=2_2&pCatMTypeStoragefield=2_2&parentcat=2&marketingtype=2&fromprice=&toprice=1300&fromarea=&toarea=&fromplotarea=&toplotarea=&fromrooms=&torooms=&objectcat=-1&wbs=-1&fromyear=&toyear=&fulltext=&absenden=Ergebnisse+anzeigen
 // Nachrichtenblatt
 
-export const mainPost = 'https://www.nestoria.de/haus/mieten/stadecken-elsheim?bedrooms=3,4&price_max=1000&price_min=600&radio=10';
+export const mainPost = 'https://www.nestoria.de/haus/mieten/stadecken-elsheim?bedrooms=3,4&price_max=1000&price_min=600&radio=10&sort=newest';
 export const itemSpacer = '\n\n';
 
 async function scrape(pool: Pool) {
@@ -59,6 +59,7 @@ async function scrape(pool: Pool) {
     const articles: Article[] = [];
 
     items.forEach(item => {
+        console.log(item.title);
         articles.push(new Article(item.title, new Date().toDateString(), item.description, item.price, item.image, item.link));
     });
 
