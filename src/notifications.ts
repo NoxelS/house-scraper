@@ -1,9 +1,7 @@
 import { createTransport } from 'nodemailer';
 
-import { Article } from './article.model';
 
-
-export async function sendEmail(article: Article) {
+export async function sendEmail(article) {
     
     const transporter = createTransport({
         host: process.env.MAIL_HOST,

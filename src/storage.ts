@@ -1,8 +1,5 @@
 import { MysqlError, Pool } from 'mysql';
 
-import { Article } from './article.model';
-import { sendEmail } from './notifications';
-
 
 function query(query: string, inputs: any[], callback: (error: MysqlError, result: any[]) => void, pool: Pool) {
     pool.getConnection(function (error, connection) {
@@ -45,36 +42,13 @@ function query(query: string, inputs: any[], callback: (error: MysqlError, resul
  * @param pool Connectin pool
  * @description Will only store an article if the uniqueKey is unique in the database.
  */
-export function storeArticle(article: Article, pool: Pool) {
+export function storePrice(priceData, pool: Pool) {
     query(
-        'SELECT * FROM houses WHERE uID = ?',
-        [article.uniqueKey],
+        'INSERT INTO `ebay-prices`.`mx5` (`price`, `aid`) VALUES (?, ?);',
+        [priceData.price, priceData.id],
         (err, result) => {
-            if (err || !result.length) {
-                // Article does not exist
-                console.log(`Found new article: "${article.title.length > 50 ? article.title.substr(0, 50) + '...' : article.title}"`);
-                query(
-                    'INSERT INTO houses (`uID`, `title`, `date`, `description`, `tel`, `chiffre`, `link`, `price`, `img`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);',
-                    [
-                        article.uniqueKey,
-                        article.title,
-                        article.date,
-                        article.description,
-                        article.tel,
-                        article.chiffre,
-                        article.link,
-                        article.price,
-                        article.img
-                    ],
-                    err => {
-                        if (err) {
-                            throw err;
-                        } else {
-                            sendEmail(article);
-                        }
-                    },
-                    pool
-                );
+            if (err) {
+                console.log(err);
             }
         },
         pool

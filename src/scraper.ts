@@ -3,19 +3,16 @@ import { createPool, Pool, PoolConfig } from 'mysql';
 import { schedule } from 'node-cron';
 import Puppeteer, { launch, LaunchOptions } from 'puppeteer';
 
-import { Article } from './article.model';
-import { storeArticle } from './storage';
+import { storePrice } from './storage';
 
 
 /** Only use .env files when running in dev mode */
 if (!process.env.produtction) config();
 
-// https://www.nestoria.de/haus/mieten/stadecken-elsheim?price_max=1500
-// https://www.immonet.de/immobiliensuche/sel.do?pageoffset=1&listsize=26&objecttype=1&locationname=Stadecken-Elsheim&acid=&actype=&city=142884&ajaxIsRadiusActive=true&sortby=16&suchart=2&radius=25&pcatmtypes=2_2&pCatMTypeStoragefield=2_2&parentcat=2&marketingtype=2&fromprice=&toprice=1300&fromarea=&toarea=&fromplotarea=&toplotarea=&fromrooms=&torooms=&objectcat=-1&wbs=-1&fromyear=&toyear=&fulltext=&absenden=Ergebnisse+anzeigen
-// Nachrichtenblatt
-
-export const mainPost = 'https://www.nestoria.de/haus/mieten/stadecken-elsheim?bedrooms=3,4&price_max=1000&price_min=600&radio=10&sort=newest';
+export const ebay =
+    'https://www.ebay-kleinanzeigen.de/s-autos/mazda/mx-5/k0c216+autos.ez_i:1999%2C+autos.km_i:170000%2C182000+autos.marke_s:mazda+autos.power_i:%2C110';
 export const itemSpacer = '\n\n';
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 async function scrape(pool: Pool) {
     const browser = await Puppeteer.launch(<LaunchOptions>{
@@ -25,45 +22,40 @@ async function scrape(pool: Pool) {
     });
 
     const page = await browser.newPage();
-    await page.goto(mainPost);
+
+    await page.goto(ebay);
+
+    await delay(1000);
+
+    await page.click('#gdpr-banner-accept');
 
     /** Items are text array of the html <article> node inner text. */
-    const items = await page.evaluate(() => {
-        const mapToNotEmptyInnerHtml = (ele: Element) => ele.innerHTML.replace(/\s/g, '');
-        const mapToText = (ele: Element) => ele.textContent?.replace(/\r\n|\n|\r/g, '');
-
-        const titles = Array.from(document.querySelectorAll('.listing__title__text')).map(ele => ele.innerHTML.split('\n')[0]);
-        const descriptions = Array.from(document.querySelectorAll('.listing__description')).map(ele =>
-            ele.textContent?.replace(/\r\n|\n|\r/g, '').replace('                            ', '')
+    const [aids, price] = await page.evaluate(() => {
+        const price = Array.from(document.querySelectorAll('.aditem-main--middle--price')).map(ele =>
+            ele?.innerHTML
+                .replace(/(\r\n|\n|\r)/gm, '')
+                .replace(/<[^>]*>/g, '')
+                ?.trim()
+                .replace(/\D/g, '')
         );
-        const prices = Array.from(document.querySelectorAll('.result__details__price'))
-            .map(mapToText)
-            .map(s => s?.replace('                           ', ','));
-        const links = Array.from(document.querySelectorAll('.results__link')).map(ele => ele.getAttribute('data-href'));
-        const images = Array.from(document.querySelectorAll('.desktopImg')).map(ele => ele.getAttribute('data-lazy'));
-        const articles: any[] = [];
-
-        for (let i = 0; i < titles.length; i++) {
-            articles.push({
-                title: titles[i],
-                description: descriptions[i],
-                price: prices[i],
-                link: 'https://www.nestoria.de' + links[i],
-                image: images[i]
-            });
-        }
-
-        return articles;
+        const aids: string[] = [];
+        document.querySelectorAll('article')?.forEach(a => aids.push(a.dataset['adid'] || ''));
+        return [aids, price];
     });
 
-    const articles: Article[] = [];
+    const prices: { id: string; price: number }[] = [];
+    for (let i = 0; i < aids.length; i++) {
+        prices.push({ id: aids[i], price: Number(price[i]) });
+    }
 
-    items.forEach(item => {
-        console.log(item.title);
-        articles.push(new Article(item.title, new Date().toDateString(), item.description, item.price, item.image, item.link));
+    let initialValue = prices.map(i => i.price).reduce((previousValue, currentValue) => previousValue + currentValue, 0);
+    const median = initialValue / prices.length;
+
+    prices.forEach(priceData => {
+        storePrice(priceData, pool);
     });
 
-    articles.forEach(article => storeArticle(article, pool));
+    console.log('Current median: ' + Math.round(median));
 
     await browser.close();
 }
