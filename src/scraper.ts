@@ -9,8 +9,7 @@ import { storePrice } from './storage';
 /** Only use .env files when running in dev mode */
 if (!process.env.produtction) config();
 
-export const ebay =
-    'https://www.ebay-kleinanzeigen.de/s-autos/mazda/mx-5/k0c216+autos.ez_i:1999%2C+autos.km_i:170000%2C182000+autos.marke_s:mazda+autos.power_i:%2C110';
+export const ebay = 'https://www.ebay-kleinanzeigen.de/s-autos/mazda/mx-5/k0c216+autos.ez_i:1999%2C+autos.marke_s:mazda+autos.power_i:%2C110';
 export const itemSpacer = '\n\n';
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -30,7 +29,7 @@ async function scrape(pool: Pool) {
     await page.click('#gdpr-banner-accept');
 
     /** Items are text array of the html <article> node inner text. */
-    const [aids, price] = await page.evaluate(() => {
+    const [aids, price, tags] = await page.evaluate(() => {
         const price = Array.from(document.querySelectorAll('.aditem-main--middle--price')).map(ele =>
             ele?.innerHTML
                 .replace(/(\r\n|\n|\r)/gm, '')
@@ -40,12 +39,19 @@ async function scrape(pool: Pool) {
         );
         const aids: string[] = [];
         document.querySelectorAll('article')?.forEach(a => aids.push(a.dataset['adid'] || ''));
-        return [aids, price];
+        const tags = Array.from(document.querySelectorAll('span.simpletag')).map(ele =>
+            ele?.innerHTML
+                .replace(/(\r\n|\n|\r)/gm, '')
+                .replace(/<[^>]*>/g, '')
+                ?.trim()
+                .replace(/\D/g, '')
+        );
+        return [aids, price, tags];
     });
 
-    const prices: { id: string; price: number }[] = [];
+    const prices: { id: string; price: number; km: number; age: number }[] = [];
     for (let i = 0; i < aids.length; i++) {
-        prices.push({ id: aids[i], price: Number(price[i]) });
+        prices.push({ id: aids[i], price: Number(price[i]), km: Number(tags[2 * i]), age: Number(tags[2 * i + 1]) });
     }
 
     let initialValue = prices.map(i => i.price).reduce((previousValue, currentValue) => previousValue + currentValue, 0);

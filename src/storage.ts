@@ -44,10 +44,10 @@ function query(query: string, inputs: any[], callback: (error: MysqlError, resul
  */
 export function storePrice(priceData, pool: Pool) {
     query(
-        'INSERT INTO `ebay-prices`.`mx5` (`price`, `aid`) VALUES (?, ?);',
-        [priceData.price, priceData.id],
+        'INSERT INTO `ebay-prices`.`mx5` (`price`, `aid`, `km`, `age`) VALUES (?, ?, ?, ?);',
+        [priceData.price, priceData.id, priceData.km, priceData.age],
         (err, result) => {
-            if (err) {
+            if (err && err.sqlState !== '23000') {
                 console.log(err);
             }
         },
